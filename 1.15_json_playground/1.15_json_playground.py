@@ -9,6 +9,7 @@ at, but you will not be able to run any queries through our UI.
 """
 import json
 import requests
+import pprint
 
 BASE_URL = "http://musicbrainz.org/ws/2/"
 ARTIST_URL = BASE_URL + "artist/"
@@ -20,6 +21,10 @@ query_type = {  "simple": {},
                 "atr": {"inc": "aliases+tags+ratings"},
                 "aliases": {"inc": "aliases"},
                 "releases": {"inc": "releases"}}
+
+
+def has_tag_name_kurt(artist):
+    return 'tags' in artist and any(tag['name'] == "kurt cobain" for tag in artist['tags'])
 
 
 def query_site(url, params, uid="", fmt="json"):
@@ -69,33 +74,59 @@ def main():
     and iteration will be key to understand the structure of the data!
     """
 
-    # Query for information in the database about bands named Nirvana
-    results = query_by_name(ARTIST_URL, query_type["simple"], '周杰伦')
-    #pretty_print(results)
-    artist_id = results['artists'][0]['id']
-    # print "\nARTIST:"
-    # pretty_print(results['artists'][1])
-    # print '\n ID is:'
-    # print artist_id
+    # Query for information in the database about bands named FIRST AND KIT
+    results = query_by_name(ARTIST_URL, query_type["simple"], "FIRST AND KIT")
+    print 'How many bands named FIRST AND KIT?'
+    print len(results['artists'])  # or print result['count']
 
-    # Isolate information from the 4th band returned (index 3)
-    # print "\nARTIST:"
-    # pretty_print(results["artists"][3])
+    # Query for information in the database about QUEEN
+    results_queen = query_by_name(ARTIST_URL, query_type["simple"], 'QUEEN')
+    print 'Begin-area name for QUEEN:'
+    for artist in results_queen['artists']:
+        if artist['name'] == 'Queen' and 'begin-area' in artist:
+            print artist['begin-area']['name']
+            break
 
-    # Query for releases from that band using the artist_id
-    # artist_id = results["artists"][3]["id"]
-    artist_data = query_site(ARTIST_URL, query_type["releases"], artist_id)
-    releases = artist_data["releases"]
+    # Query for information in the database for Beatles
+    results_beatles = query_by_name(ARTIST_URL, query_type["simple"], 'BEATLES')
+    # pretty_print(results_beatles)
+    print 'Spanish alias for BEATLES:'
 
+    artists_beatles = [artist for artist in results_beatles['artists'] if artist['name'] == 'The Beatles']
+    # note artists_beatles will be a list
+    alias_es = [alias for alias in artists_beatles[0]['aliases'] if alias['locale'] == 'es']
+    print alias_es[0]['name']
 
-    # Print information about releases from the selected band
-    print "\nONE RELEASE:"
-    pretty_print(releases[0], indent=2)
+    '''
+    Alternatively using for loop:
+    # for artist in results_beatles['artists']:
+    #     if artist['name'] == 'The Beatles':
+    #         for alias in artist['aliases']:
+    #             if alias['locale'] == 'es':
+    #                 print alias['name']
+    #                 break;
+    '''
 
-    release_titles = [r["title"] for r in releases]
-    print "\nALL TITLES:"
-    for t in release_titles:
-        print t
+    # Query for information in the database about Nirvana
+    print 'Disambiguation for Nirvana which Kurt Cobain is in:'
+    results_nirvana = query_by_name(ARTIST_URL, query_type["simple"], 'NIRVANA')
+    # using filter to first find all artists whose name exactly is Nirvana
+    artists_nirvana = list(filter(lambda artist: artist['name'] == 'Nirvana', results_nirvana['artists']))
+
+    # Using filter to find out artist who has a tag named kurt cobain
+    artist_nirvana_kurt = list(filter(has_tag_name_kurt, artists_nirvana))
+    nirvana_disambiguations = [a['disambiguation'] for a in artist_nirvana_kurt ]
+    for d in nirvana_disambiguations:
+        print d
+
+    # Query for information in the database about One Direction
+    print 'Disambiguation for Nirvana which Kurt Cobain is in:'
+    results_one_direction = query_by_name(ARTIST_URL, query_type["simple"], 'One Direction')
+    results_one_direction_exact = list(filter(lambda artist: artist['name'] == 'One Direction', results_one_direction['artists']))
+    one_direction_start_year = [a['life-span']['begin'] for a in results_one_direction_exact]
+    for y in one_direction_start_year:
+        print y
+
 
 if __name__ == '__main__':
     main()
