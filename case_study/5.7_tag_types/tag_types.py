@@ -35,11 +35,11 @@ def key_type(element, keys):
         # YOUR CODE HERE
         # The re method '.match()' only searches from the start of a string (it is typically used to find exact matches).
         # Instead, if you use the method '.search()' then it will search the entire string for the pattern
-        if re.search(r'^([a-z]|_)*$',element.attrib['k']):
+        if lower.search(element.attrib['k']):
            keys['lower'] += 1
-        elif re.search(r'^([a-z]|_)*:([a-z]|_)*$',element.attrib['k']):
+        elif lower_colon.search(element.attrib['k']):
             keys['lower_colon'] += 1
-        elif re.search(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]',element.attrib['k']):
+        elif problemchars.search(element.attrib['k']):
             keys['problemchars'] += 1
         else:
             keys['other'] += 1
